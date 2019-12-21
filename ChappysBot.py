@@ -3,12 +3,12 @@ from urllib.parse import quote_plus
 import requests
 import time
 
-
 SCREDDIT = "testingground4bots"
 
 FLAG_NA = "🇺🇸" #"NA" 
 FLAG_EU = "🇪🇺" #"EU"
 FLAG_KR = "🇰🇷" #"KR"
+# FLAG_CN = "CN" #flag -- China cannot be accessed from the blizz api
 
 REGION_DEFAULT = "default"
 REGION_NA = "na"
@@ -42,34 +42,50 @@ REDDIT_NEWLINE = "    \n"   # reddit newlines are retarded. Need 4 spaces first
 RACE_DEFAULT = None
 LIMIT_DEFAULT = 5   # default number of queries to be called
 
-# FLAG_CN = "CN" #flag -- China cannot be accessed from the blizz api
+MY_ACCOUNT = "chappys_bot"
+PASSWORD = "becna8-bixvab-qejkIv"
 
 def main():
     # auth
     reddit = praw.Reddit(
-        user_agent="chappys_bot (by /u/ImAHappyChappy)",
+        user_agent="chappys_bot (by /u/chappys_bot)",
         client_id="iL01bYVF2-4BjQ",
         client_secret="0zF-orkcPrnwKbxGcOTEkLAn8LM",
-        username="ImAHappyChappy",
-        password="Melbourne1212",
+        username=MY_ACCOUNT,
+        password=PASSWORD, #TODO hide password for online use
     )
 
 # https://praw.readthedocs.io/en/latest/tutorials/reply_bot.html
-    
     subreddit = reddit.subreddit(SCREDDIT)
     #for comment in subreddit.stream.comments(skip_existing=True):
     for comment in subreddit.stream.comments():
-        comment = comment
         print(comment.body)
         print(comment.body.split())
 
-        #checks for any comments that contain !mmr
+        # don't reply to self
+        skip = False
+        if comment.author.name == MY_ACCOUNT:
+            skip = True
+
+        # don't reply to a comment I've already replied to
+        print("########")
+        for i in comment.replies:
+            print(i.author.name)
+    
+        for i in comment.replies:
+            if i.author.name == MY_ACCOUNT:
+                skip = True
+                break
+
+        if skip:
+            print("skipping comment")
+            continue
+
+        # checks for any comments that contain !mmr
         if "!mmr" in comment.body.lower().split():
             process_comment(comment)
        
         # else do nothing
-
-    
     print("DONE")
 
 # API KEYS
@@ -86,7 +102,7 @@ API_KEY_BNET_ID = "bnet_id"
 # Should be of the form !mmr <>
 def process_comment(comment):
     comment_lst = comment.body.lower().split()
-    
+        
     query_index = comment_lst.index("!mmr")     # index for where query starts
     query_lst = comment_lst[query_index+2:]     # +2 as we skip the !mmr and name
 
@@ -97,13 +113,16 @@ def process_comment(comment):
     # ERROR requests:
     # if !mmr w/ no text following
     # if the name is not made up of only alpha characters
+    
     if (comment_lst[query_index:]) == []:
         comment.reply(format_error_reply(ERROR_NO_INPUT))
+        return
 
     # parse the current name
     in_name = comment_lst[query_index + 1]
     if not in_name.isalpha():
         comment.reply(format_error_reply(ERROR_NON_NUMERICAL))
+        return
     
     # parse the text 
     # input of form: !mmr <name> [region, limit, race]
@@ -159,22 +178,23 @@ def format_error_reply(error_type):
 
 
 
-# formats the reply for reddit comment output
+# Formats the message for reddit comment output
 # eg. 
-
+# Displaying top 2 results:
+# Chappy: 5500 Z
+# Chappy (chris): 5450 Z
+# Not here? Check out this link for a complete list.
 def format_reply(output_lst, input_name):
     print("Formatted reply!")
     out = ""
     out += f"Displaying top {len(output_lst)} results:" + REDDIT_NEWLINE
 
     for person in output_lst:
-
         out += f"{person}" + REDDIT_NEWLINE
-
-    out += f"Not here? Check out [this link](https://www.sc2ladder.herokuapp.com/search?query={input_name}) for a full list."
+    out += REDDIT_NEWLINE + f"Not here? Check out [this link](https://sc2ladder.herokuapp.com/search?query={input_name}) for a complete list."
     return out
 
-STATUS_OK = 200 #todo double check
+STATUS_OK = 200 
 
 # Takes a request, calls the API and returns a formatted list
 # Returns a list with a formatted output line per element in the list
