@@ -3,8 +3,20 @@ from urllib.parse import quote_plus
 import requests
 
 
+'''
+mmr bot reads through starcraft reddit and finds phrases that contain the !mmr command.
+Similar in function to the !mmr bot on twitch.
 
-SCREDDIT = "testingground4bots"
+
+Example Phrases:
+!mmr Chappy NA 3    -> Returns top 3 results containing the name "Chappy" on the NA server
+!mmr Chappy EU      -> Returns top 5 results containing "Chappy" in EU
+!mmr Chappy 2       -> Returns top 2 results containing "Chappy"
+!mmr Chappy         -> Returns top 5 results containing "Chappy"
+
+'''
+
+SCREDDIT = "starcraft"
 
 FLAG_NA = "NA" #🇺🇸 
 FLAG_EU = "EU" #🇪🇺
@@ -49,9 +61,6 @@ def main():
         username="",
         password="",
     )
-
-# https://praw.readthedocs.io/en/latest/tutorials/reply_bot.html
-    
     
     subreddit = reddit.subreddit(SCREDDIT)
     #for comment in subreddit.stream.comments(skip_existing=True):
@@ -230,28 +239,6 @@ def translateRaceIntoAPIForm(race):
 
     return None # should not ever do this
     
-
-
-"""
-
-
-
-def process_submission(submission):
-    # Ignore titles with more than 10 words as they probably are not simple
-    # questions.
-    if len(submission.title.split()) > 10:
-        return
-
-    normalized_title = submission.title.lower()
-    for question_phrase in QUESTIONS:
-        if question_phrase in normalized_title:
-            url_title = quote_plus(submission.title)
-            reply_text = REPLY_TEMPLATE.format(url_title)
-            print("Replying to: {}".format(submission.title))
-            submission.reply(reply_text)
-            # A reply has been made so do not attempt to match other phrases.
-            break
-"""
-
+# start
 if __name__ == "__main__":
     main()
