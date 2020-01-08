@@ -44,10 +44,10 @@ def main():
     # auth
     reddit = praw.Reddit(
         user_agent="chappys_bot (by /u/ImAHappyChappy)",
-        client_id="iL01bYVF2-4BjQ",
-        client_secret="0zF-orkcPrnwKbxGcOTEkLAn8LM",
-        username="ImAHappyChappy",
-        password="Melbourne1212",
+        client_id="",
+        client_secret="",
+        username="",
+        password="",
     )
 
 # https://praw.readthedocs.io/en/latest/tutorials/reply_bot.html
