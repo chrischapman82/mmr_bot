@@ -1,4 +1,5 @@
 *** UPDATE ***
+
 Due to Blizzard changing the API related to blizzard sc2 for data-protection regulations, the bot will be taken down for now.
 - Forum post (23 jan): https://us.forums.blizzard.com/en/sc2/t/starcraft-ii-community-api-update/6803
 *** UPDATE ***
