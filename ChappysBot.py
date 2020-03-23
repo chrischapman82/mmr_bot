@@ -3,9 +3,39 @@ from urllib.parse import quote_plus
 import requests
 import time
 
-SCREDDIT = "testingground4bots"
+import config
 
-FLAG_NA = "🇺🇸" #"NA" 
+
+'''
+ChappysBot reads through starcraft reddit and finds phrases that contain the !mmr command.
+Creates a comment in reply with the top names sorted by matchmaking.
+Similar in function to the !mmr bot on twitch.
+
+Example Phrases:
+!mmr Chappy NA 3    -> Returns top 3 results containing the name "Chappy" on the NA server
+!mmr Chappy EU      -> Returns top 5 results containing "Chappy" in EU
+!mmr Chappy 2       -> Returns top 2 results containing "Chappy"
+!mmr Chappy         -> Returns top 5 results containing "Chappy"
+
+eg. !mmr Chappy 8
+Displaying top 8 results:
+🇺🇸 Chappy: 5525 Z
+🇺🇸 Chappy: 5459 Z
+🇰🇷 Chappy: 5182 Z
+🇺🇸 Chappy: 4865 P
+🇺🇸 chappy: 4832 Z
+🇺🇸 chappy: 4549 P
+🇺🇸 Chappy: 4517 P
+🇺🇸 Chappy: 4407 P
+'''
+
+SCREDDIT = "starcraft"
+ATZ		= "allthingszerg"
+#TESTINGGROUNDS = "testingground4bots"
+SUBREDDITS = [SCREDDIT, ATZ]	# the subs that I want ot post to.
+
+
+FLAG_NA = "🇺🇸" #"NA"
 FLAG_EU = "🇪🇺" #"EU"
 FLAG_KR = "🇰🇷" #"KR"
 # FLAG_CN = "CN" #flag -- China cannot be accessed from the blizz api
@@ -25,8 +55,8 @@ RACE_TERRAN = "t"
 RACE_RANDOM = "r"
 
 API_RACE_ZERG = "zerg"
-API_RACE_PROTOSS = "protoss"
 API_RACE_TERRAN = "terran"
+API_RACE_PROTOSS = "protoss"
 API_RACE_RANDOM = "random"
 API_RACES = [API_RACE_ZERG, API_RACE_PROTOSS, API_RACE_TERRAN, API_RACE_RANDOM]
 
@@ -42,29 +72,30 @@ REDDIT_NEWLINE = "    \n"   # reddit newlines are retarded. Need 4 spaces first
 RACE_DEFAULT = None
 LIMIT_DEFAULT = 5   # default number of queries to be called
 
-MY_ACCOUNT = "chappys_bot"
-PASSWORD = "becna8-bixvab-qejkIv"
-
 def main():
     # auth
     reddit = praw.Reddit(
-        user_agent="chappys_bot (by /u/chappys_bot)",
-        client_id="iL01bYVF2-4BjQ",
-        client_secret="0zF-orkcPrnwKbxGcOTEkLAn8LM",
-        username=MY_ACCOUNT,
-        password=PASSWORD, #TODO hide password for online use
+        user_agent=config.USER_AGENT,
+        client_id=config.CLIENT_ID,
+        client_secret=config.CLIENT_SECRET,
+        username=config.USERNAME,
+        password=config.PASSWORD, 
     )
 
 # https://praw.readthedocs.io/en/latest/tutorials/reply_bot.html
+    
+    #for comment in reddit.multireddit(SUBREDDITS).stream.comments():
+
     subreddit = reddit.subreddit(SCREDDIT)
     #for comment in subreddit.stream.comments(skip_existing=True):
+    #for comment in reddit.multireddit(SCREDDIT, ATZ).stream.comments(skip_existing=True):
     for comment in subreddit.stream.comments():
         print(comment.body)
         print(comment.body.split())
 
         # don't reply to self
         skip = False
-        if comment.author.name == MY_ACCOUNT:
+        if comment.author.name == config.USERNAME:
             skip = True
 
         # don't reply to a comment I've already replied to
@@ -86,9 +117,9 @@ def main():
             process_comment(comment)
        
         # else do nothing
-    print("DONE")
 
-# API KEYS
+
+# KEYS for interacting with api
 API_KEY_RACE = "race"
 API_KEY_RANK = "rank"
 API_KEY_REGION = "region"
@@ -113,7 +144,6 @@ def process_comment(comment):
     # ERROR requests:
     # if !mmr w/ no text following
     # if the name is not made up of only alpha characters
-    
     if (comment_lst[query_index:]) == []:
         comment.reply(format_error_reply(ERROR_NO_INPUT))
         return
@@ -153,7 +183,7 @@ def process_comment(comment):
     out = format_reply(out_lst, in_name)
     print("final output:")
     print(out)
-    #comment.reply(out)
+    comment.reply(out)
     return
 
 ERROR_NO_INPUT = "no_input"
@@ -170,13 +200,11 @@ def format_error_reply(error_type):
     elif errror_type == ERROR_NON_NUMERICAL:
         out = f"Error. Blizzard names can't have numbers or non alphabetic characters"
         out += REDDIT_NEWLINE
-        out = f"Please enter a command in the form !mmr <name> <opt:limit> <opt:region> <opt:>"
+        out = f"Please enter a command in the form !mmr <name> <opt:limit> <opt:region> <opt:race>"
         out += REDDIT_NEWLINE
         out += f"eg. !mmr Chappy 3 NA Z"
 
     return out
-
-
 
 # Formats the message for reddit comment output
 # eg. 
@@ -239,8 +267,13 @@ def process_request(name, limit=LIMIT_DEFAULT, in_region=REGION_DEFAULT, in_race
             rank = i[API_KEY_RANK]
             mmr = i[API_KEY_MMR]
             clan = i[API_KEY_CLAN]
-            username = strip_id(i[API_KEY_USERNAME])
-            bnet_id = strip_id(i[API_KEY_BNET_ID])
+
+            username = (i[API_KEY_USERNAME])
+            print(i[API_KEY_BNET_ID])
+            if i[API_KEY_BNET_ID] is None:
+            	username = bnet_id
+            else:
+            	bnet_id = strip_id(i[API_KEY_BNET_ID])
             
             # output string
             out = f"{region_display.upper()}  "
@@ -268,7 +301,7 @@ def sc2_ladder_adapter(query):
     start_time=time.time()
     response = requests.get(f"http://sc2ladder.herokuapp.com/api/player?query={query}")
     print("Time to call and process API--- %s seconds ---" % (time.time() - start_time))
-    return requests.get(f"http://sc2ladder.herokuapp.com/api/player?query={query}")
+    return response
 
 # Checks if the region for region0 and region1 are equivalent
 # Slightly different definition of regions so this is useful
@@ -311,16 +344,15 @@ def get_flag_for_region(region):
 # helper. Transforms the API output race to the local version
 # eg. zerg -> z
 def get_race(race):
-    if race == API_RACE_ZERG:
-        return RACE_ZERG
-    if API_RACE_PROTOSS:
-        return RACE_PROTOSS
-    if API_RACE_TERRAN:
-        return RACE_TERRAN
-    if API_RACE_RANDOM:
-        return RACE_RANDOM
-    return # should not reach this
-
+	if race == API_RACE_ZERG:
+		return RACE_ZERG
+	if race == API_RACE_PROTOSS:
+		return RACE_PROTOSS
+	if API_RACE_TERRAN:
+		return RACE_TERRAN
+	if API_RACE_RANDOM:
+		return RACE_RANDOM
+	return # should not reach this
 
 # currently the ids are in the form - danny#1984
 # simply removes the hash and numbers after the hash
