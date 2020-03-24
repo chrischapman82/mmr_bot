@@ -29,8 +29,9 @@ Displaying top 8 results:
 🇺🇸 Chappy: 4407 P
 '''
 
-SCREDDIT = "starcraft"
+#SCREDDIT = "starcraft"
 ATZ		= "allthingszerg"
+SCREDDIT = "testingground4bots"
 #TESTINGGROUNDS = "testingground4bots"
 SUBREDDITS = [SCREDDIT, ATZ]	# the subs that I want ot post to.
 
@@ -271,7 +272,7 @@ def process_request(name, limit=LIMIT_DEFAULT, in_region=REGION_DEFAULT, in_race
             username = (i[API_KEY_USERNAME])
             print(i[API_KEY_BNET_ID])
             if i[API_KEY_BNET_ID] is None:
-            	username = bnet_id
+                bnet_id = username
             else:
             	bnet_id = strip_id(i[API_KEY_BNET_ID])
             
