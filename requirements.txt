@@ -25,7 +25,7 @@ sqlparse==0.3.1
 update-checker==0.16
 uplink==0.9.1
 uritemplate==3.0.1
-urllib3==1.25.8
+urllib3==1.26.5
 virtualenv==16.2.0
 websocket-client==0.57.0
 whitenoise==5.0.1
